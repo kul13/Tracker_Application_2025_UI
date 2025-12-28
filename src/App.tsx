@@ -3,6 +3,10 @@ import { Login, Register } from './components/Auth';
 import { apiService } from './services/api';
 import { User } from './type';
 import { Toaster, toast } from 'react-hot-toast';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AddExpenseUI } from './components/AddExpense';
+import { Header } from './components/Header';
+
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
@@ -15,11 +19,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleAuthSuccess = () => {
-    setUser(apiService.getCurrentUser());
-    toast.success('Logged in successfully!');
+    const userFromApi = apiService.getCurrentUser();
 
+  if (!userFromApi) {
+    setUser({ name: 'User' } as User);
+  } else {
+    setUser(userFromApi);
+  }
+  toast.success('Logged in successfully!');
   };
 
+  const handleRegisterSuccess = () => {
+    toast.success('Registration successful! Please login.');
+    setAuthView('login');
+  };
   const handleLogout = () => {
     apiService.logout();
     setUser(null);
@@ -28,8 +41,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <>
-      {/* Toaster must be rendered somewhere in the JSX */}
+    <BrowserRouter>
       <Toaster position="top-right" reverseOrder={false} />
 
       {!user ? (
@@ -56,7 +68,7 @@ const App: React.FC = () => {
             {authView === 'login' ? (
               <Login onSuccess={handleAuthSuccess} />
             ) : (
-              <Register onSuccess={handleAuthSuccess} />
+              <Register onSuccess={handleRegisterSuccess} />
             )}
 
             <div className="mt-4 text-center">
@@ -74,20 +86,12 @@ const App: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen flex flex-col items-center justify-center">
-          <h2 className="text-xl font-semibold mb-4">
-            Welcome, {user.name}
-          </h2>
-          <p className="mb-4">Authentication successful 🎉</p>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded"
-          >
-            Logout
-          </button>
-        </div>
+        <Header userName={user.name} onLogout={handleLogout}>
+        <AddExpenseUI />
+        </Header>
+  
       )}
-    </>
+    </BrowserRouter>
   );
 };
 
