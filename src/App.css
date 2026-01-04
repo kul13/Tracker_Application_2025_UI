@@ -36,3 +36,20 @@
     transform: rotate(360deg);
   }
 }
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+input[type="password"]::-webkit-password-eye {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  filter: invert(1);
+}
+
+input[type="password"]::-webkit-textfield-decoration-container {
+  filter: invert(1);
+}

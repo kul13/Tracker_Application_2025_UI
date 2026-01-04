@@ -5,26 +5,28 @@
 //   email: string;
 // }
 
-// export interface Category {
-//   id: string;
-//   name: string;
-// }
+export interface Category {
+  id: string;
+  name: string;
+}
 
-// export interface Item {
-//   id: string;
-//   categoryId: string;
-//   name: string;
-// }
+export interface Item {
+  id: string;
+  categoryId: string;
+  name: string;
+}
 
-// export interface ExpenseEntry {
-//   id: string; // Temp ID for local grid
-//   categoryId: string;
-//   categoryName: string;
-//   itemId: string;
-//   itemName: string;
-//   amount: number;
-//   notes: string;
-// }
+export interface ExpenseEntry {
+  id: number; // Temp ID for local grid
+  categoryId: number;
+  categoryName: string;
+  itemId: number;
+  itemName: string;
+  amount: number;
+  notes: string;
+  expenseDate: string; 
+   totalAmount: number; 
+}
 
 // export interface PersistedExpense extends ExpenseEntry {
 //   userId: string;
@@ -57,4 +59,10 @@ export interface User {
   name: string;
   email: string;
 }
-// export type TimeFilter = 'day' | 'week' | 'month' | 'year' | 'all';
+
+export interface PersistedExpense extends ExpenseEntry {
+  userId: string;
+  userName: string;
+  createdAt: string;
+}
+export type TimeFilter = 'day' | 'week' | 'month' | 'year' | 'all';

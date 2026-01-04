@@ -1,13 +1,28 @@
 
+import { get } from 'http';
 import {
   LoginRequest,
   RegisterRequest,
   LoginResponse,
   User
 } from '../type';
+import axios from 'axios';
+
+
+
 const API_BASE = 'https://localhost:7296/api';
 const TOKEN_KEY = 'expense_token';
 const USER_KEY = 'expense_user';
+export const axiosInstance = axios.create({
+  baseURL: API_BASE,
+});
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('expense_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 export const apiService = {
   async login(email: string, password: string): Promise<void> {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -17,7 +32,8 @@ export const apiService = {
     });
 
     if (!res.ok) {
-      throw new Error('Invalid email or password');
+      const msg = await res.text();
+      throw new Error(msg);
     }
 
     const data: LoginResponse = await res.json();
@@ -53,5 +69,34 @@ export const apiService = {
   getCurrentUser(): User | null {
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
+  }
+
+};
+
+export const categoryService = {
+  getCategories: async () => {
+    const res = await axiosInstance.get('/Expense/categories');
+    return res.data;
+  },
+
+  getItemsByCategory: async (categoryId: Number) => {
+    const res = await axiosInstance.get(`/Expense/items/${categoryId}`);
+    return res.data;
+  }
+};
+
+export interface ExpenseCreateDto {
+  amount: number;
+  date: string;            // matches backend
+  categoryId: number;
+  itemId: number;
+  notes?: string;
+  totalamount?: number;
+}
+
+export const expenseService = {
+  addBulkExpenses: async (expenses: ExpenseCreateDto[]) => {
+    const res = await axiosInstance.post(`/Expense/bulk`, expenses);
+    return res.data;
   }
 };
