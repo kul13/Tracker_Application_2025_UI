@@ -123,7 +123,7 @@ const App: React.FC = () => {
         <Route
           path="/login"
           element={
-            <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-blue-100">
+            <div className="relative min-h-screen overflow-y-auto flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-blue-100">
               <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-300 rounded-full blur-3xl opacity-30"></div>
               <div className="absolute bottom-0 -right-32 w-96 h-96 bg-blue-300 rounded-full blur-3xl opacity-30"></div>
 

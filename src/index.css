@@ -11,3 +11,16 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+/* ✅ Mobile overflow & zoom safety fix */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ✅ Prevent tables from breaking vertical scroll on zoom */
+table {
+  max-width: 100%;
+}

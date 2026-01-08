@@ -63,6 +63,17 @@ export interface User {
 export interface PersistedExpense extends ExpenseEntry {
   userId: string;
   userName: string;
-  createdAt: string;
+  expenseDate: string;
+}
+
+export interface AuditExpense {
+  id: number;
+  categoryId: number;
+  categoryName: string;
+  itemId: number;
+  itemName: string;
+  amount: number;
+  notes: string | null;
+  date: string; 
 }
 export type TimeFilter = 'day' | 'week' | 'month' | 'year' | 'all';

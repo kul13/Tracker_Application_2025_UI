@@ -99,7 +99,7 @@ export const Header: React.FC<PropsWithChildren<HeaderProps>> = ({
             &copy; {new Date().getFullYear()} ExpensePro. All rights reserved.
           </div>
           <div className="text-xs">
-            Built with ❤️ by <span className="font-medium text-gray-700">Kuldeep Mohanty</span>
+            Built by <span className="font-medium text-gray-700">Kuldeep</span>
           </div>
         </div>
       </footer>

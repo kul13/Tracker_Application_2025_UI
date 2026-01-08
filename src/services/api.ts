@@ -13,6 +13,7 @@ import axios from 'axios';
 const API_BASE = 'https://localhost:7296/api';
 const TOKEN_KEY = 'expense_token';
 const USER_KEY = 'expense_user';
+
 export const axiosInstance = axios.create({
   baseURL: API_BASE,
 });
@@ -71,7 +72,10 @@ export const apiService = {
     return raw ? JSON.parse(raw) : null;
   }
 
+
+
 };
+
 
 export const categoryService = {
   getCategories: async () => {
@@ -98,5 +102,19 @@ export const expenseService = {
   addBulkExpenses: async (expenses: ExpenseCreateDto[]) => {
     const res = await axiosInstance.post(`/Expense/bulk`, expenses);
     return res.data;
+  },
+
+  getAuditTrailbyUser: async () => {
+    const res = await axiosInstance.get(`/Expense/userexpenses`);
+    return res.data;
+  },
+
+  getAuditTrailbyUserPage: async (page: number, sizeParam: number) => {
+    const res = await axiosInstance.get('/Expense/userexpenses', {
+      params: { page, pageSize: sizeParam }
+    });
+    return res.data;
   }
+
+
 };

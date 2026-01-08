@@ -1,36 +1,45 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { apiService } from '../services/api';
-import { Category, Item, PersistedExpense, TimeFilter } from '../type';
+import { expenseService, categoryService } from '../services/api';
+import { Category, Item, TimeFilter, AuditExpense } from '../type';
 
 const AuditTable: React.FC = () => {
-  const [expenses, setExpenses] = useState<PersistedExpense[]>([]);
+  const [expenses, setExpenses] = useState<AuditExpense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Item[]>([]);
 
   const [catFilter, setCatFilter] = useState('');
   const [itemFilter, setItemFilter] = useState('');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number | 'all'>(10);
 
-//   useEffect(() => {
-//     Promise.all([
-//       apiService.getExpenses(),
-//       apiService.getCategories(),
-//       apiService.getItems()
-//     ]).then(([exp, cat, item]) => {
-//       setExpenses(exp);
-//       setCategories(cat);
-//       setItems(item);
-//     });
-//   }, []);
+  //const [pageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    const sizeParam = pageSize === 'all' ? 0 : pageSize;
+    Promise.all([
+      categoryService.getCategories(),
+      categoryService.getItemsByCategory(0),
+      expenseService.getAuditTrailbyUserPage(page, sizeParam)
+    ]).then(([cat, item, res]) => {
+      setCategories(cat);
+      setItems(item);
+      setExpenses(res.data);
+      setTotalCount(res.totalCount);
+    });
+  }, [page, pageSize]);
+
+
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter(e => {
-    //   const matchCat = catFilter ? e.categoryId === catFilter : true;
-    //   const matchItem = itemFilter ? e.itemId === itemFilter : true;
+      const matchCat = catFilter ? Number(e.categoryId) === Number(catFilter) : true;
+      const matchItem = itemFilter ? Number(e.itemId) === Number(itemFilter) : true;
 
       let matchTime = true;
       if (timeFilter !== 'all') {
-        const date = new Date(e.createdAt);
+        const date = new Date(e.date);
         const now = new Date();
 
         if (timeFilter === 'day')
@@ -45,9 +54,7 @@ const AuditTable: React.FC = () => {
           matchTime = date.getFullYear() === now.getFullYear();
       }
 
-      return 
-    //   matchCat && matchItem && 
-    //   matchTime;
+      return matchCat && matchItem && matchTime;
     });
   }, [expenses, catFilter, itemFilter, timeFilter]);
 
@@ -58,24 +65,35 @@ const AuditTable: React.FC = () => {
   const grandTotal = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const handleExport = () => {
-    const headers = ['Sl. No', 'User', 'Category', 'Item', 'Amount', 'Date'];
+    const headers = ['Sl. No', 'Category', 'Item', 'Amount', 'Date'];
     const rows = filteredExpenses.map((e, i) => [
       i + 1,
-      e.userName,
       e.categoryName,
       e.itemName,
-      e.amount.toFixed(2),
-      new Date(e.createdAt).toLocaleDateString()
+      'Rs.' + e.amount.toFixed(2),
+      new Date(e.date).toLocaleDateString()
     ]);
 
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    // Footer row (Grand Total)
+    const footer = ['', '', 'Grand Total', 'Rs.' + grandTotal.toFixed(2), ''];
+
+    const csvContent = [
+      headers,
+      ...rows,
+      footer
+    ]
+      .map(row => row.join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
     a.download = `expense_audit_${timeFilter}.csv`;
     a.click();
+
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -158,8 +176,8 @@ const AuditTable: React.FC = () => {
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {['Sl. No', 'User', 'Category', 'Item', 'Date', 'Amount (₹)'].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                {['Sl. No', 'Category', 'Item', 'Date', 'Amount (₹)'].map(h => (
+                  <th key={h} className={`px-6 py-4 text-xs font-bold text-gray-500 uppercase ${h.includes('Amount') ? 'text-right' : ''}`}>
                     {h}
                   </th>
                 ))}
@@ -169,7 +187,7 @@ const AuditTable: React.FC = () => {
             <tbody className="divide-y">
               {filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 italic">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic">
                     No expenses found.
                   </td>
                 </tr>
@@ -177,7 +195,6 @@ const AuditTable: React.FC = () => {
                 filteredExpenses.map((e, i) => (
                   <tr key={e.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-500">{i + 1}</td>
-                    <td className="px-6 py-4 text-sm font-semibold">{e.userName}</td>
                     <td className="px-6 py-4">
                       <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-medium">
                         {e.categoryName}
@@ -185,7 +202,7 @@ const AuditTable: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm">{e.itemName}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 font-mono">
-                      {new Date(e.createdAt).toLocaleDateString()}
+                      {new Date(e.date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-right">
                       ₹{e.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -197,7 +214,7 @@ const AuditTable: React.FC = () => {
 
             <tfoot className="bg-gray-900 text-white border-t-4 border-indigo-600">
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-right text-xs font-bold uppercase tracking-widest">
+                <td colSpan={4} className="px-6 py-4 text-right text-xs font-bold uppercase tracking-widest">
                   Grand Total
                 </td>
                 <td className="px-6 py-4 text-lg font-bold text-right">
@@ -208,6 +225,31 @@ const AuditTable: React.FC = () => {
           </table>
         </div>
       </div>
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-6">
+        <span className="text-sm text-gray-500">
+          {pageSize === 'all'
+            ? `Showing all ${totalCount} records`
+            : `Page ${page} of ${Math.ceil(totalCount / pageSize)}`}
+        </span>
+         <select
+          value={pageSize}
+          onChange={(e) => {
+            const value = e.target.value === 'all' ? 'all' : Number(e.target.value);
+            setPageSize(value);
+            setPage(1); // reset page when size changes
+          }}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+          <option value="all">All</option>
+        </select>
+        
+      </div>
+
+      
     </div>
   );
 };
